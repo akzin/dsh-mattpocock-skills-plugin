@@ -1,0 +1,38 @@
+# Matt Pocock's agent skills — DSH bundle layer.
+#
+# Source: https://github.com/mattpocock/skills (MIT, (c) Matt Pocock).
+# Skill bodies are byte-for-byte upstream; the only transformation is
+# structural: upstream nests skills under skills/<category>/<name>/, and DSH
+# discovers exactly one level deep (<root>/<name>/SKILL.md), so they are
+# flattened into this package's skills/ directory. See NOTICE.md.
+#
+# Why an inserted row rather than patching the shared one: the Web profile
+# ships the host `skill-filesystem` row `disabled` ("presets own local
+# discovery"), so appending customSkillDirs to it leaves the whole set
+# invisible on web. This bundle inserts its own instance into the global skill
+# layer instead, which every surface reads. `providerName` keeps it distinct
+# from a preset's default `filesystem` provider, and `includeDefaultRoots:
+# false` isolates discovery to exactly this bundle's skills/ directory (it must
+# not re-scan ~/.dsh/skills or project roots).
+#
+# No dependencies are declared, and that is deliberate:
+# @deepseek-ai/dsh-skill-filesystem ships with dsh and resolves from the dsh
+# installation. Declaring it as a dependency is what broke an earlier port of
+# this same skill set: the range "*" resolved to that package's `latest` tag,
+# which sits on an older release line whose peer dependencies did not match the
+# runtime, and the compatibility check disabled the plugin row and every skill
+# with it.
+#
+# The skills path is resolved through Node's own resolver rather than a
+# hand-built node_modules path, so hoisting and symlinked installs keep working.
+# `baseUrl` in a bundle patch layer is the profile directory.
+
+- insert:
+    - id: skill-filesystem-mattpocock
+      name: '@deepseek-ai/dsh-skill-filesystem'
+      config:
+        providerName: mattpocock
+        includeDefaultRoots: false
+        customSkillDirs:
+          - !!js >-
+            process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:path').dirname(process.getBuiltinModule('node:module').createRequire(baseUrl).resolve('@akzin/dsh-mattpocock-skills-plugin/package.json')), 'skills')
